@@ -5,10 +5,15 @@ import ParentCategoryRoutes from "./routes/parent_category_routes.js";
 import { connectMongodb } from './database/connectMongodb.js';
 import CategoryRouter from './routes/category_routes.js';
 import GeneralRouter from './routes/general_routes.js';
+import cors from 'cors';
 
 const app = express();
 
 app.use(express.json());
+
+app.use(cors({
+  origin : '*'
+}));
 
 await connectMongodb();
 
