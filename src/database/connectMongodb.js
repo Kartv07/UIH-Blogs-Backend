@@ -1,22 +1,21 @@
-import { MongoClient } from "mongodb";
 
-global.mongoDBClient = null;
+import mongoose from "mongoose";
+
+let isConnected = false;
 
 export const connectMongodb = async () => {
     try {
-        if (global.mongoDBClient) {
-            return global.mongoDBClient.db(process.env.DB_NAME);
-        }
-    
-        const client = new MongoClient(process.env.MONGODB_URI);
+        if (isConnected) return mongoose.connection;
 
-        await client.connect();
-        global.mongoDBClient = client;
+        console.log("Connecting to MongoDB...");
+        await mongoose.connect(process.env.MONGODB_URI);
 
+        isConnected = true;
         console.log("MongoDB connected successfully");
         
-        return client.db(process.env.DB_NAME); 
+        return mongoose.connection;
     } catch (error) {
         throw error;
     }
 };
+

@@ -1,13 +1,18 @@
 
 import express from 'express';
 import 'dotenv/config';
-import parentCategoryRoutes from "./routes/parent_category_routes.js";
+import ParentCategoryRoutes from "./routes/parent_category_routes.js";
+import { connectMongodb } from './database/connectMongodb.js';
+import CategoryRouter from './routes/category_routes.js';
 
 const app = express();
 
 app.use(express.json());
 
-app.use(`/parent-category`, parentCategoryRoutes);
+await connectMongodb();
+
+app.use(`/parent-category`, ParentCategoryRoutes);
+app.use(`/category`, CategoryRouter);
 
 const PORT = process?.env?.PORT || 3000;
 

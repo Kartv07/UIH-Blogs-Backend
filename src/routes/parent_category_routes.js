@@ -1,31 +1,23 @@
 import { Router } from "express";
-import { connectMongodb } from "../database/connectMongodb.js";
-import { ObjectId } from "mongodb";
+import ParentCategoryCollection from "../database/schemas/parent_category.js";
+import mongoose, {ObjectId} from "mongoose";
 
-const parentCategoryrouter = Router();
+const ParentCategoryrouter = Router();
 
 // Get All Parent Categories
-parentCategoryrouter.get("/", async (req, res) => {
-
+ParentCategoryrouter.get("/", async (req, res) => {
   try {
-    const db = await connectMongodb(); 
+    const fetchedData = await ParentCategoryCollection.find({}, { title: 1, slug: 1 });
 
-    const collection = db.collection("parent_category"); 
-
-    const result = await collection.find({}).toArray();
-
-    res.status(200).json(result);
+    return  res.status(200).json(fetchedData);
   } catch (error) {
-    res.status(500).json({ message: "Error fetching parent categories" });
+    return  res.status(500).json({ message: "Error fetching parent categories" });
   }
 });
 
 // Add New Parent Category
-parentCategoryrouter.post("/add", async (req, res) => {
+ParentCategoryrouter.post("/add", async (req, res) => {
   try {
-    const db = await connectMongodb();
-
-    const collection = db.collection("parent_category");
 
     const { title, slug } = req.body;
 
@@ -33,26 +25,26 @@ parentCategoryrouter.post("/add", async (req, res) => {
       return res.status(400).json({ message: "Please provide title and slug" });
     }
 
-    let ifExist = await collection.findOne({ slug });
+    let ifExist = await ParentCategoryCollection.findOne({slug})
 
     if(ifExist) {
       return res.status(400).json({ message: "Parent Category already exist" });
     }
 
-    const result = await collection.insertOne({ title, slug, createdAt : new Date() });
+    const result = await ParentCategoryCollection.create({title,slug});
 
-    res.status(201).json(result);
+    if(result?._id){
+      return res.status(201).json({message : "Parent Category added successfully", _id : result?._id});
+    }
+
   } catch (error) {
-    res.status(500).json({ message: "Error adding parent category" });
+    return res.status(500).json({ message: "Error adding parent category" });
   }
 });
 
 // Update Parent Category
-parentCategoryrouter.put("/upate/:id", async (req, res) => {
+ParentCategoryrouter.put("/upate/:id", async (req, res) => {
   try {
-    const db = await connectMongodb();
-
-    const collection = db.collection("parent_category");
 
     const { title, slug } = req.body;
 
@@ -60,34 +52,32 @@ parentCategoryrouter.put("/upate/:id", async (req, res) => {
       return res.status(400).json({ message: "Please provide title and slug" });
     }
 
-    let isExist = await collection.findOne({ slug });
+    let existAndUpdate = await ParentCategoryCollection.findOneAndUpdate({_id: new mongoose.Types.ObjectId(req.params.id)}, {title, slug}, {new: true});
 
-    if(!isExist) {
-      return res.status(400).json({ message: "Parent Category not found" });
+    if(existAndUpdate){
+      return res.status(202).json({message : "Parent Category updated successfully"});
     }
 
-    const result = await collection.updateOne({ _id: new ObjectId(req.params.id) }, { $set: { title, slug, updatedAt: new Date() } });
-
-    res.status(200).json(result);
+    return res.status(404).json({ message: "Parent Category not found" });
   } catch (error) {
-    console.log(error)
     res.status(500).json({ message: "Error updating parent category" });
   }
 });
 
 // Delete Parent Category
-parentCategoryrouter.delete("/delete/:id", async (req, res) => {
+ParentCategoryrouter.delete("/delete/:id", async (req, res) => {
   try {
-    const db = await connectMongodb();
 
-    const collection = db.collection("parent_category");
+    const result = await ParentCategoryCollection.findOneAndDelete({_id : new mongoose.Types.ObjectId(req?.params?.id)}, {new : true});
 
-    const result = await collection.deleteOne({ _id: new ObjectId(req.params.id) });
-
-    res.status(200).json(result);
+    if(result){
+      return res.status(200).json({message : "Parent Category deleted successfully"});
+    }
+    
+    return res.status(404).json({ message: "Parent Category not found" });
   } catch (error) {
-    res.status(500).json({ message: "Error deleting parent category" });
+    return res.status(500).json({ message: "Error deleting parent category" });
   }
 });
 
-export default parentCategoryrouter;
+export default ParentCategoryrouter;
