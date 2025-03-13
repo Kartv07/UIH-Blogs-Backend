@@ -17,6 +17,6 @@ const parentCategorySchema = new Schema(
   }
 );
 
-const ParentCategoryCollection = model("parent_category", parentCategorySchema);
+const ParentCategoryCollection = model("parent_categories", parentCategorySchema);
 
 export default ParentCategoryCollection;
