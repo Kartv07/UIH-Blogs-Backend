@@ -12,6 +12,11 @@ const CategorySchema = new Schema(
       required: true,
       unique: true,
     },
+    desc: {
+      type: String,
+      required: true,
+      unique: true,
+    },
     parent_category: {
       type: Schema.Types.ObjectId,
       ref: "parent_category",

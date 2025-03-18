@@ -7,7 +7,7 @@ const CategoryRouter = Router();
 // Get All Categories
 CategoryRouter.get("/", async (req, res) => {
   try {
-    const fetchedData = await CategoryCollection.find({}, { title: 1, slug: 1 });
+    const fetchedData = await CategoryCollection.find({}, { title: 1, slug: 1, desc : 1 });
 
     return  res.status(200).json(fetchedData);
   } catch (error) {
@@ -41,6 +41,7 @@ CategoryRouter.get("/:id", async (req, res) => {
         $project : {
           title : 1,
           slug : 1,
+          desc : 1,
           parentCategory : {
             title : 1,
             slug : 1
@@ -61,7 +62,7 @@ CategoryRouter.get("/:id", async (req, res) => {
 CategoryRouter.post("/add", async (req, res) => {
   try {
 
-    const { title, slug, parentCategory } = req.body;
+    const { title, slug, desc, parentCategory } = req.body;
 
     if(!title || !slug || !parentCategory) {
       return res.status(400).json({ message: "Please provide required fields !" });
@@ -73,7 +74,7 @@ CategoryRouter.post("/add", async (req, res) => {
       return res.status(400).json({ message: " Category already exist !" });
     }
 
-    const result = await CategoryCollection.create({title,slug, parent_category : parentCategory});
+    const result = await CategoryCollection.create({title,slug, desc, parent_category : parentCategory});
 
     if(result?._id){
       return res.status(201).json({message : " Category added successfully !", _id : result?._id});
