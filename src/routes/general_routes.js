@@ -102,10 +102,10 @@ GeneralRouter.post("/add-blog", async (req, res) => {
         parent_category: new mongoose.Types.ObjectId(parentCategoryObj?._id),
       });
     }
-
+    let slugVal = req.body.heading.trim().toLowerCase().replace(/\s+/g, "-");
     let createNewBlog = await BlogCollection.create({
       heading: req.body.heading,
-      slug: req.body.heading.trim().toLowerCase().replace(/\s+/g, "-"),
+      slug: slugVal,
       smallDesc: req.body.smallDesc,
       desc: req.body.desc,
       category: new mongoose.Types.ObjectId(categoryObj?._id),
@@ -114,7 +114,7 @@ GeneralRouter.post("/add-blog", async (req, res) => {
     if (createNewBlog) {
       return res
         .status(201)
-        .json({ message: "Blog Added Successfully", id: createNewBlog?._id });
+        .json({ message: "Blog Added Successfully", slug : slugVal });
     }
   } catch (error) {
     console.log(error);
