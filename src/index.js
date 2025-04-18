@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json());
 
 const allowedOrigins = [
-  "https://uih-blogs.vercel.app",
+'  https://until-its-happen.vercel.app',
   "http://localhost:3000",
 ];
 
