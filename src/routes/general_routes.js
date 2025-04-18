@@ -114,7 +114,7 @@ GeneralRouter.post("/add-blog", async (req, res) => {
     if (createNewBlog) {
       return res
         .status(201)
-        .json({ message: "Blog Added Successfully", slug : slugVal });
+        .json({ message: "Blog Added Successfully", slug: slugVal });
     }
   } catch (error) {
     console.log(error);
@@ -139,8 +139,10 @@ GeneralRouter.put("/update-blog/:id", async (req, res) => {
         parent_category: new mongoose.Types.ObjectId(parentCategoryObj?._id),
       });
     }
-    
-    let isBlogExist = await BlogCollection.findOne({ _id: new mongoose.Types.ObjectId(req.params.id) });
+
+    let isBlogExist = await BlogCollection.findOne({
+      _id: new mongoose.Types.ObjectId(req.params.id),
+    });
 
     if (!isBlogExist) {
       return res.status(404).json({ message: "Blog not found" });
@@ -148,22 +150,25 @@ GeneralRouter.put("/update-blog/:id", async (req, res) => {
 
     let slugVal = req.body.heading.trim().toLowerCase().replace(/\s+/g, "-");
 
-    let updateBlog = await BlogCollection.updateOne({
-      _id: new mongoose.Types.ObjectId(req.params.id),
-    }, {
-      $set: {
-        heading: req.body.heading,
-        slug: slugVal,
-        smallDesc: req.body.smallDesc,
-        desc: req.body.desc,
-        category: new mongoose.Types.ObjectId(categoryObj?._id),
+    let updateBlog = await BlogCollection.updateOne(
+      {
+        _id: new mongoose.Types.ObjectId(req.params.id),
+      },
+      {
+        $set: {
+          heading: req.body.heading,
+          slug: slugVal,
+          smallDesc: req.body.smallDesc,
+          desc: req.body.desc,
+          category: new mongoose.Types.ObjectId(categoryObj?._id),
+        },
       }
-    })
+    );
 
     if (updateBlog?.acknowledged) {
       return res
         .status(200)
-        .json({ message: "Blog Updated Successfully", slug : slugVal});
+        .json({ message: "Blog Updated Successfully", slug: slugVal });
     }
   } catch (error) {
     console.log(error);
@@ -176,7 +181,7 @@ GeneralRouter.get("/get-blogs", async (req, res) => {
     let { _id, parentCategory, category, ...otherQuery } = req.query;
     let pipeline = [
       {
-        $match : otherQuery ?? {},
+        $match: otherQuery ?? {},
       },
       {
         $lookup: {
@@ -197,21 +202,21 @@ GeneralRouter.get("/get-blogs", async (req, res) => {
       },
       { $unwind: "$parentCategories" },
     ];
-    
+
     // 🔹 Filter based on `parentCategory` if provided
     if (parentCategory) {
       pipeline.push({
         $match: { "parentCategories.slug": parentCategory },
       });
     }
-    
+
     // 🔹 Filter based on `category` if provided
     if (category) {
       pipeline.push({
         $match: { "categories.slug": category },
       });
     }
-    
+
     // 🔹 Select required fields
     pipeline.push({
       $project: {
@@ -238,6 +243,77 @@ GeneralRouter.get("/get-blogs", async (req, res) => {
   } catch (error) {
     console.log(error);
   }
+});
+
+GeneralRouter.get("/static-paths", async (req, res) => {
+  try {
+    let {slug} = req?.query;
+
+    let paths = [];
+    if(slug == 'parentCategory'){
+      paths = await ParentCategoryCollection.find({}, {slug : 1, _id : 0});
+      paths = paths.map(path => ({params: {parentSlug: path.slug}}))
+    }
+    else if(slug == 'category'){
+      paths = await CategoryCollection.aggregate([
+        {
+          $lookup: {
+            from: "parent_categories",
+            localField: "parent_category",
+            foreignField: "_id",
+            as: "parent_category",
+          },
+        },
+        { $unwind: "$parent_category" },
+        {
+          $project: {
+            slug: 1,
+            parent_category: {
+              slug: 1,
+            },
+          },
+        }
+      ]);
+      paths = paths.map(path => ({params: {categorySlug: path.slug, parentSlug: path.parent_category.slug}}))
+    }
+    else if(slug == 'slug'){
+      paths = await BlogCollection.aggregate([
+        {
+          $lookup: {
+            from: "categories",
+            localField: "category",
+            foreignField: "_id",
+            as: "categories",
+          },
+        },
+        { $unwind: "$categories" },
+        {
+          $lookup: {
+            from: "parent_categories",
+            localField: "categories.parent_category",
+            foreignField: "_id",
+            as: "parentCategories",
+          },
+        },
+        { $unwind: "$parentCategories" },
+        {
+          $project: {
+            slug: 1,
+            categories: {
+              slug: 1,
+            },
+            parentCategories: {
+              slug: 1,
+            },
+          },
+        },
+      ])
+
+      paths = paths.map(path => ({params: {slug: path.slug, categorySlug: path.categories.slug, parentSlug: path.parentCategories.slug}}))
+    }
+      
+    return res.status(200).json({paths})
+  } catch (error) {}
 });
 
 export default GeneralRouter;
