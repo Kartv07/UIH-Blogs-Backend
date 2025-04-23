@@ -201,6 +201,11 @@ GeneralRouter.get("/get-blogs", async (req, res) => {
         },
       },
       { $unwind: "$parentCategories" },
+      {
+        $sort : {
+          createdAt : -1
+        }
+      }
     ];
 
     // 🔹 Filter based on `parentCategory` if provided
@@ -217,21 +222,29 @@ GeneralRouter.get("/get-blogs", async (req, res) => {
       });
     }
 
+    let projectObj = {
+      heading: 1,
+      slug: 1,
+      smallDesc: 1,
+      createdAt : 1,
+      categories: {
+        title: 1,
+        slug: 1,
+      },
+      parentCategories: {
+        title: 1,
+        slug: 1,
+      },
+    }
+
+    if(otherQuery?.slug){
+      projectObj.slug = 1
+    }
+
     // 🔹 Select required fields
     pipeline.push({
       $project: {
-        heading: 1,
-        slug: 1,
-        smallDesc: 1,
-        desc: 1,
-        categories: {
-          title: 1,
-          slug: 1,
-        },
-        parentCategories: {
-          title: 1,
-          slug: 1,
-        },
+        ...projectObj
       },
     });
 
