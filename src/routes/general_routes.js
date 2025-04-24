@@ -238,7 +238,7 @@ GeneralRouter.get("/get-blogs", async (req, res) => {
     }
 
     if(otherQuery?.slug){
-      projectObj.slug = 1
+      projectObj.desc = 1
     }
 
     // 🔹 Select required fields
